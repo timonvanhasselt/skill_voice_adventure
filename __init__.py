@@ -3,25 +3,10 @@ from ovos_utils.intents import IntentBuilder
 from ovos_utils.process_utils import RuntimeRequirements
 from ovos_workshop.decorators import intent_handler
 from ovos_workshop.skills import OVOSSkill
-from pydub import AudioSegment
-from pydub.playback import play
+from mycroft.util.audio_utils import play_audio_file
 import threading
 import random
 
-
-
-class VoiceAdventureSkill(OVOSSkill):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.score = 0
-        self.current_option_index = 0
-
-        # Start the background audio loop in a separate thread
-        self.background_thread = threading.Thread(target=self.play_background_audio_loop)
-        self.background_thread.daemon = True
-        self.background_thread.start()
-
-    
 # Define the audio file paths for question 1
 QUESTION_1_AUDIO_PATHS = {
     "question": "q1.mp3",
@@ -47,15 +32,20 @@ QUESTION_2_AUDIO_PATHS = {
 
 # ...
 
-   def initialize(self):
-        # Initialize the OCP audio service with the bus
-        self.audio = OCPInterface(self.bus)
+class VoiceAdventureSkill(OVOSSkill):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.score = 0
+        self.current_option_index = 0
 
+        # Start the background audio loop in a separate thread
+        self.background_thread = threading.Thread(target=self.play_background_audio_loop)
+        self.background_thread.daemon = True
+        self.background_thread.start()
 
     def play_background_audio_loop(self):
-        background_audio = AudioSegment.from_mp3(BACKGROUND_AUDIO_LOOP)
         while True:
-            play(background_audio)
+            play_audio_file(BACKGROUND_AUDIO_LOOP)
 
     @classproperty
     def runtime_requirements(self):
@@ -80,8 +70,8 @@ QUESTION_2_AUDIO_PATHS = {
         question_key = f"Question {question_number}"
         question_info = globals()[f"QUESTION_{question_number}_AUDIO_PATHS"]
 
-        self.speak(question_info["intro"])
-        self.speak(question_info["question"])
+        play_audio_file(question_info["intro"])
+        play_audio_file(question_info["question"])
 
         # Randomize the order of options for the current question
         options = question_info["options"]
@@ -89,7 +79,7 @@ QUESTION_2_AUDIO_PATHS = {
 
         # Play the randomized options for the current question
         for option in options:
-            play(option)
+            play_audio_file(option)
 
         # Reset the option index for the new question
         self.current_option_index = 0
@@ -108,10 +98,10 @@ QUESTION_2_AUDIO_PATHS = {
         question_info = globals()[f"QUESTION_{question_number}_AUDIO_PATHS"]
 
         if is_correct:
-            self.speak(question_info["correct_answer"])
+            play_audio_file(question_info["correct_answer"])
             self.score += 1
         else:
-            self.speak(question_info["incorrect_answer"])
+            play_audio_file(question_info["incorrect_answer"])
 
         self.current_question_index += 1
         if self.current_question_index < 10:
@@ -124,6 +114,3 @@ QUESTION_2_AUDIO_PATHS = {
         # Stop the background audio loop thread
         self.background_thread.join()
         pass
-
-
-

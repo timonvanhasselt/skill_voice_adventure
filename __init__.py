@@ -9,22 +9,22 @@ import random
 
 # Define the audio file paths for question 1
 QUESTION_1_AUDIO_PATHS = {
-    "question": "q1.mp3",
-    "options": ["q1a1.mp3", "q1a2.mp3", "q1a3.mp3", "q1a4.mp3"],
-    "correct_answer": "q1correct.mp3",
-    "incorrect_answer": "q1incorrect.mp3",
-    "intro": "q1intro.mp3",
-    "outro": "q1outro.mp3"
+    "question": "scene1/q1.mp3",
+    "options": ["scene1/q1a1.mp3", "scene1/q1a2.mp3", "scene1/q1a3.mp3", "scene1/q1a4.mp3"],
+    "correct_answer": "scene1/q1correct.mp3",
+    "incorrect_answer": "scene1/q1incorrect.mp3",
+    "intro": "scene1/q1intro.mp3",
+    "outro": "scene1/q1outro.mp3"
 }
 
 # Define the audio file paths for question 2
 QUESTION_2_AUDIO_PATHS = {
-    "question": "q2.mp3",
-    "options": ["q2a1.mp3", "q2a2.mp3", "q2a3.mp3", "q2a4.mp3"],
-    "correct_answer": "q2correct.mp3",
-    "incorrect_answer": "q2incorrect.mp3",
-    "intro": "q2intro.mp3",
-    "outro": "q2outro.mp3"
+    "question": "scene2/q2.mp3",
+    "options": ["scene2/q2a1.mp3", "scene2/q2a2.mp3", "scene2/q2a3.mp3", "scene2/q2a4.mp3"],
+    "correct_answer": "scene2/q2correct.mp3",
+    "incorrect_answer": "scene2/q2incorrect.mp3",
+    "intro": "scene2/q2intro.mp3",
+    "outro": "scene2/q2outro.mp3"
 }
 
 # Define the audio file paths for question 3

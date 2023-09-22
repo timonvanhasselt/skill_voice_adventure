@@ -1,86 +1,100 @@
-import random
-import threading
-import time
-import speech_recognition as sr
+from ovos_utils import classproperty
+from ovos_utils.intents import IntentBuilder
+from ovos_utils.process_utils import RuntimeRequirements
+from ovos_workshop.decorators import intent_handler
+from ovos_workshop.skills import OVOSSkill
 from pydub import AudioSegment
 from pydub.playback import play
+import threading
 
+# Replace with your actual audio file path
+BACKGROUND_AUDIO_LOOP = "path/to/background_audio_loop.mp3"
+
+# Replace with your actual audio file paths
 QUESTIONS_AUDIO_PATHS = {
     "Question 1": {
-        "question": "question1.mp3",
-        "correct_answer": "question1_yes.mp3",
-        "incorrect_answer": "incorrect_answer.mp3"
+        "question": "path/to/question1.mp3",
+        "correct_answer": "path/to/question1_yes.mp3",
+        "incorrect_answer": "path/to/question1_no.mp3"
     },
     "Question 2": {
-        "question": "question2.mp3",
-        "correct_answer": "question2_yes.mp3",
-        "incorrect_answer": "incorrect_answer.mp3"
+        "question": "path/to/question2.mp3",
+        "correct_answer": "path/to/question2_yes.mp3",
+        "incorrect_answer": "path/to/question2_no.mp3"
     },
     # Add paths for other questions in a similar manner
 }
 
-BACKGROUND_AUDIO_LOOP = "background_audio_loop.mp3"
+class VoiceAdventureSkill(OVOSSkill):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.score = 0
+        self.question_keys = list(QUESTIONS_AUDIO_PATHS.keys())
+        self.total_questions = len(self.question_keys)
+        self.current_question_index = 0
 
-def play_background_audio_loop():
-    background_audio = AudioSegment.from_mp3(BACKGROUND_AUDIO_LOOP)
-    while True:
-        play(background_audio)
+        # Start the background audio loop in a separate thread
+        self.background_thread = threading.Thread(target=self.play_background_audio_loop)
+        self.background_thread.daemon = True
+        self.background_thread.start()
 
-def play_audio(file_path):
-    audio = AudioSegment.from_mp3(file_path)
-    play(audio)
+    def play_background_audio_loop(self):
+        background_audio = AudioSegment.from_mp3(BACKGROUND_AUDIO_LOOP)
+        while True:
+            play(background_audio)
 
-def get_user_response():
-    recognizer = sr.Recognizer()
-    
-    with sr.Microphone() as source:
-        print("Please answer with 'yes' or 'no'.")
-        audio_response = recognizer.listen(source)
-        
-    try:
-        user_response = recognizer.recognize_google(audio_response).lower()
-        return user_response
-    except sr.UnknownValueError:
-        print("Sorry, couldn't understand the audio.")
-        return None
+    @classproperty
+    def runtime_requirements(self):
+        return RuntimeRequirements(
+            internet_before_load=False,
+            network_before_load=False,
+            gui_before_load=False,
+            requires_internet=False,
+            requires_network=False,
+            requires_gui=False,
+            no_internet_fallback=True,
+            no_network_fallback=True,
+            no_gui_fallback=True,
+        )
 
-def main():
-    score = 0
-    question_keys = list(QUESTIONS_AUDIO_PATHS.keys())
-    total_questions = len(question_keys)
-    current_question_index = 0
+    @intent_handler(IntentBuilder("StartGameIntent").require("StartGameKeyword"))
+    def handle_start_game_intent(self, message):
+        self.speak_dialog("welcome")
+        self.ask_question()
 
-    while current_question_index < total_questions:
-        question_key = question_keys[current_question_index]
-        question_info = QUESTIONS_AUDIO_PATHS[question_key]
-        
-        print(f"{question_key}:")
-        play_audio(question_info["question"])
+    def ask_question(self):
+        if self.current_question_index < self.total_questions:
+            question_key = self.question_keys[self.current_question_index]
+            question_info = QUESTIONS_AUDIO_PATHS[question_key]
 
-        # Randomize the order of options for the current question
-        options = [question_info["correct_answer"], question_info["incorrect_answer"]]
-        random.shuffle(options)
-        
-        # Play the randomized options for the current question
-        for option in options:
-            play_audio(option)
-        
-        # Get user's response
-        user_response = get_user_response()
+            self.speak(question_info["question"])
+            self.speak(question_info["correct_answer"])
+            self.speak(question_info["incorrect_answer"])
 
-        if user_response is not None and user_response == 'yes':
-            print("You chose 'Yes'. That's correct!")
-            score += 1
-            current_question_index += 1
-        elif user_response is not None and user_response == 'no':
-            print("You chose 'No'. That's incorrect.")
-            play_audio(question_info["incorrect_answer"])
-            current_question_index += 1
+            self.current_question_index += 1
         else:
-            print("Invalid response. Please try again.")
-        
-        # Display the current score after each question
-        print(f"Current Score: {score}")
+            self.speak_dialog("end_of_game")
+            self.speak(f"Your final score is {self.score}")
+            self.stop()
 
-if __name__ == "__main__":
-    main()
+    @intent_handler(IntentBuilder("YesIntent").require("YesKeyword"))
+    def handle_yes_intent(self, message):
+        self.handle_answer(True)
+
+    @intent_handler(IntentBuilder("NoIntent").require("NoKeyword"))
+    def handle_no_intent(self, message):
+        self.handle_answer(False)
+
+    def handle_answer(self, is_correct):
+        if is_correct:
+            self.speak_dialog("correct_answer")
+            self.score += 1
+        else:
+            self.speak_dialog("incorrect_answer")
+
+        self.ask_question()
+
+    def stop(self):
+        # Stop the background audio loop thread
+        self.background_thread.join()
+        pass

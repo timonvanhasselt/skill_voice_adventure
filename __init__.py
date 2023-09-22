@@ -21,7 +21,9 @@ class VoiceAdventureSkill(OVOSSkill):
         self.background_thread.daemon = True
         self.background_thread.start()
 
-
+   def initialize(self):
+        # Initialize the OCP audio service with the bus
+        self.audio = OCPInterface(self.bus)
 
     # Replace with your actual audio file path
 BACKGROUND_AUDIO_LOOP = "path/to/background_audio_loop.mp3"
@@ -41,9 +43,12 @@ QUESTIONS_AUDIO_PATHS = {
     # Add paths for other questions in a similar manner
 }
     def play_background_audio_loop(self):
-        background_audio = AudioSegment.from_mp3(BACKGROUND_AUDIO_LOOP)
+       # background_audio = AudioSegment.from_mp3(BACKGROUND_AUDIO_LOOP)
+        background_audio = BACKGROUND_AUDIO_LOOP
+        
         while True:
-            play(background_audio)
+            #play(background_audio)
+            self.audio.play(background_audio)
 
     @classproperty
     def runtime_requirements(self):

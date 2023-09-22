@@ -6,46 +6,48 @@ from ovos_workshop.skills import OVOSSkill
 from mycroft.util.audio_utils import play_audio_file
 import threading
 import random
+import time
 
+url = "https://github.com/timonvanhasselt/skill_voice_adventure/raw/main/"
 # Define the audio file paths for question 1
 QUESTION_1_AUDIO_PATHS = {
-    "question": "scene1/q1.mp3",
-    "options": ["scene1/q1a1.mp3", "scene1/q1a2.mp3", "scene1/q1a3.mp3", "scene1/q1a4.mp3"],
-    "correct_answer": "scene1/q1correct.mp3",
-    "incorrect_answer": "scene1/q1incorrect.mp3",
-    "intro": "scene1/q1intro.mp3",
-    "outro": "scene1/q1outro.mp3"
+    "question":url+"scene1/q1.mp3",
+    "options": [url+"scene1/q1a1.mp3", url+"scene1/q1a2.mp3", url+"scene1/q1a3.mp3", url+"scene1/q1a4.mp3"],
+    "correct_answer": url+"scene1/q1correct.mp3",
+    "incorrect_answer": url+"scene1/q1incorrect.mp3",
+    "intro": url+"scene1/q1intro.mp3",
+    "outro": url+"scene1/q1outro.mp3"
 }
 
 # Define the audio file paths for question 2
 QUESTION_2_AUDIO_PATHS = {
-    "question": "scene2/q2.mp3",
-    "options": ["scene2/q2a1.mp3", "scene2/q2a2.mp3", "scene2/q2a3.mp3", "scene2/q2a4.mp3"],
-    "correct_answer": "scene2/q2correct.mp3",
-    "incorrect_answer": "scene2/q2incorrect.mp3",
-    "intro": "scene2/q2intro.mp3",
-    "outro": "scene2/q2outro.mp3"
+    "question": "q2.mp3",
+    "options": ["q2a1.mp3", "q2a2.mp3", "q2a3.mp3", "q2a4.mp3"],
+    "correct_answer": "q2correct.mp3",
+    "incorrect_answer": "q2incorrect.mp3",
+    "intro": "q2intro.mp3",
+    "outro": "q2outro.mp3"
 }
 
-# Define the audio file paths for question 3
-# ... (repeat this structure for each question up to 10)
-
-# ...
 
 class VoiceAdventureSkill(OVOSSkill):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.score = 0
         self.current_option_index = 0
+        self.background_audio_started = False
+        self.current_question_index = 0
 
-        # Start the background audio loop in a separate thread
+    def start_background_audio(self):
+        self.background_audio_started = True
         self.background_thread = threading.Thread(target=self.play_background_audio_loop)
         self.background_thread.daemon = True
         self.background_thread.start()
 
     def play_background_audio_loop(self):
-        while True:
-            play_audio_file(BACKGROUND_AUDIO_LOOP.mp3)
+        while self.background_audio_started:
+            play_audio_file(url+"BACKGROUND_AUDIO_LOOP.mp3")
+            time.sleep(45)
 
     @classproperty
     def runtime_requirements(self):
@@ -63,6 +65,9 @@ class VoiceAdventureSkill(OVOSSkill):
 
     @intent_handler(IntentBuilder("StartGameIntent").require("StartGameKeyword"))
     def handle_start_game_intent(self, message):
+        if not self.background_audio_started:
+            self.start_background_audio()
+        play_audio_file(QUESTION_1_AUDIO_PATHS["intro"]),
         self.ask_question()
 
     def ask_question(self):
@@ -70,8 +75,7 @@ class VoiceAdventureSkill(OVOSSkill):
         question_key = f"Question {question_number}"
         question_info = globals()[f"QUESTION_{question_number}_AUDIO_PATHS"]
 
-        play_audio_file(question_info["intro"])
-        play_audio_file(question_info["question"])
+        play_audio_file(question_info["question"]), 
 
         # Randomize the order of options for the current question
         options = question_info["options"]
@@ -111,6 +115,7 @@ class VoiceAdventureSkill(OVOSSkill):
             self.stop()
 
     def stop(self):
-        # Stop the background audio loop thread
-        self.background_thread.join()
+        self.background_audio_started = False
+        if hasattr(self, 'background_thread'):
+            self.background_thread.join()
         pass

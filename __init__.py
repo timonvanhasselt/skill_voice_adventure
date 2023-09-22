@@ -45,7 +45,7 @@ class VoiceAdventureSkill(OVOSSkill):
 
     def play_background_audio_loop(self):
         while True:
-            play_audio_file(BACKGROUND_AUDIO_LOOP)
+            play_audio_file(BACKGROUND_AUDIO_LOOP.mp3)
 
     @classproperty
     def runtime_requirements(self):

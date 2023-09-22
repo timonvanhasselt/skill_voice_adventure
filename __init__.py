@@ -7,7 +7,23 @@ from pydub import AudioSegment
 from pydub.playback import play
 import threading
 
-# Replace with your actual audio file path
+
+class VoiceAdventureSkill(OVOSSkill):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.score = 0
+        self.question_keys = list(QUESTIONS_AUDIO_PATHS.keys())
+        self.total_questions = len(self.question_keys)
+        self.current_question_index = 0
+
+        # Start the background audio loop in a separate thread
+        self.background_thread = threading.Thread(target=self.play_background_audio_loop)
+        self.background_thread.daemon = True
+        self.background_thread.start()
+
+
+
+    # Replace with your actual audio file path
 BACKGROUND_AUDIO_LOOP = "path/to/background_audio_loop.mp3"
 
 # Replace with your actual audio file paths
@@ -24,20 +40,6 @@ QUESTIONS_AUDIO_PATHS = {
     },
     # Add paths for other questions in a similar manner
 }
-
-class VoiceAdventureSkill(OVOSSkill):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.score = 0
-        self.question_keys = list(QUESTIONS_AUDIO_PATHS.keys())
-        self.total_questions = len(self.question_keys)
-        self.current_question_index = 0
-
-        # Start the background audio loop in a separate thread
-        self.background_thread = threading.Thread(target=self.play_background_audio_loop)
-        self.background_thread.daemon = True
-        self.background_thread.start()
-
     def play_background_audio_loop(self):
         background_audio = AudioSegment.from_mp3(BACKGROUND_AUDIO_LOOP)
         while True:
